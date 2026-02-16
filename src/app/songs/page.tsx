@@ -1,5 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { SONGS } from "@/lib/songs";
+
+export const metadata: Metadata = {
+  title: "Harmonica Songs - Free Interactive Tabs",
+  description:
+    "Learn famous songs on harmonica with free interactive tabs. Includes Twinkle Twinkle, Happy Birthday, Oh Susanna, Amazing Grace, Love Me Do, Piano Man and more. Beginner to advanced difficulty.",
+  alternates: {
+    canonical: "https://harmonica-pro-iota.vercel.app/songs",
+  },
+};
 
 const difficultyColors = {
   Beginner: "bg-success/15 text-success border-success/30",

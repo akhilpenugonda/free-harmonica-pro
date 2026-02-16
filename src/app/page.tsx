@@ -1,8 +1,46 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Harmonica Pro - Learn Harmonica for Free | Practice Songs & Notes",
+  description:
+    "The first ever completely free harmonica learning platform. Practice single notes with real-time pitch detection, learn famous songs with interactive tabs, and master the 10-hole diatonic harmonica. No sign-ups, no paywalls.",
+  alternates: {
+    canonical: "https://harmonica-pro-iota.vercel.app",
+  },
+};
 
 export default function HomePage() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Harmonica Pro",
+    description:
+      "The first ever completely free harmonica learning platform with real-time pitch detection, interactive song tabs, and practice tools.",
+    url: "https://harmonica-pro-iota.vercel.app",
+    applicationCategory: "MusicApplication",
+    operatingSystem: "Any",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    featureList: [
+      "Real-time pitch detection",
+      "Interactive harmonica tabs",
+      "10 famous songs",
+      "Practice sequences and scales",
+      "Note reference chart",
+      "No sign-up required",
+    ],
+  };
+
   return (
     <div className="min-h-screen">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background gradient orbs */}
