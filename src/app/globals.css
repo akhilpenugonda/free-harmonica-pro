@@ -105,3 +105,282 @@ body {
 .hole-active {
   animation: pulse-glow 1s ease-in-out infinite;
 }
+
+/* ========== Full-Screen Chromatic Tuner ========== */
+
+.tuner-fullscreen {
+  position: relative;
+  min-height: calc(100vh - 64px);
+  min-height: calc(100dvh - 64px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 1rem;
+  user-select: none;
+}
+
+.tuner-bg-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 0.5s ease;
+}
+
+.tuner-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 1;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* --- Flat / Note / Sharp row --- */
+
+.tuner-indicators {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.tuner-flat-indicator,
+.tuner-sharp-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(100, 116, 139, 0.25);
+  transition: color 0.3s ease, opacity 0.3s ease;
+  min-width: 48px;
+}
+
+.tuner-flat-indicator.active,
+.tuner-sharp-indicator.active {
+  opacity: 1;
+}
+
+/* --- Note letter --- */
+
+.tuner-note-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 160px;
+}
+
+.tuner-note-letter {
+  font-size: clamp(8rem, 22vw, 14rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  position: relative;
+  font-variant-numeric: tabular-nums;
+}
+
+.tuner-sharp-symbol {
+  font-size: 0.5em;
+  vertical-align: super;
+  margin-left: -0.05em;
+  font-weight: 700;
+}
+
+.tuner-octave-label {
+  font-size: 1.25rem;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: -0.5rem;
+  letter-spacing: 0.1em;
+}
+
+/* --- Idle state --- */
+
+.tuner-idle-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.tuner-idle-icon {
+  color: var(--muted);
+  opacity: 0.4;
+}
+
+.tuner-idle-icon.listening-pulse {
+  animation: tuner-pulse 2s ease-in-out infinite;
+  opacity: 0.6;
+}
+
+@keyframes tuner-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.08); }
+}
+
+/* --- Deviation wheel --- */
+
+.tuner-wheel-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.tuner-wheel-container {
+  position: relative;
+  width: clamp(180px, 45vw, 260px);
+  height: clamp(180px, 45vw, 260px);
+}
+
+.tuner-wheel-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.tuner-wheel-center-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tuner-cents-value {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.tuner-cents-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: 0.15rem;
+}
+
+/* --- Frequency readout --- */
+
+.tuner-freq-readout {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-height: 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- In-tune badge --- */
+
+.tuner-in-tune-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 0.4rem 1.5rem;
+  border-radius: 9999px;
+  animation: tuner-badge-in 0.3s ease-out;
+}
+
+@keyframes tuner-badge-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- Mic button --- */
+
+.tuner-mic-button {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--accent);
+  background: rgba(6, 182, 212, 0.1);
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+.tuner-mic-button:hover {
+  background: rgba(6, 182, 212, 0.2);
+  transform: translateX(-50%) scale(1.05);
+}
+
+.tuner-mic-button:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.tuner-mic-button.active {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--danger);
+  animation: tuner-mic-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tuner-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+  50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+}
+
+/* --- Error --- */
+
+.tuner-error {
+  position: fixed;
+  bottom: 7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90vw;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--danger);
+  font-size: 0.85rem;
+  text-align: center;
+  z-index: 20;
+  backdrop-filter: blur(8px);
+}
+
+/* --- Mobile adjustments --- */
+
+@media (max-height: 700px) {
+  .tuner-note-letter {
+    font-size: clamp(5rem, 18vw, 9rem);
+  }
+  .tuner-note-container {
+    min-height: 100px;
+  }
+  .tuner-wheel-container {
+    width: clamp(140px, 35vw, 200px);
+    height: clamp(140px, 35vw, 200px);
+  }
+}
+
+@media (max-width: 380px) {
+  .tuner-note-letter {
+    font-size: 6rem;
+  }
+  .tuner-indicators {
+    gap: 0.75rem;
+  }
+}

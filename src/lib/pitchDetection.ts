@@ -10,6 +10,13 @@ const AudioCtx =
       (window as any).webkitAudioContext
     : null;
 
+export interface PitchDetectorOptions {
+  /** Lowest detectable frequency in Hz (default: 180 for harmonica) */
+  minFrequency?: number;
+  /** Highest detectable frequency in Hz (default: 2200 for harmonica) */
+  maxFrequency?: number;
+}
+
 export class PitchDetector {
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
@@ -20,6 +27,13 @@ export class PitchDetector {
   private isIOS = false;
   private buffer: Float32Array<ArrayBuffer> = new Float32Array(0);
   private sampleRate = 44100;
+  private minFreq: number;
+  private maxFreq: number;
+
+  constructor(options?: PitchDetectorOptions) {
+    this.minFreq = options?.minFrequency ?? 180;
+    this.maxFreq = options?.maxFrequency ?? 2200;
+  }
 
   async start(): Promise<void> {
     if (this.isRunning) return;
@@ -187,9 +201,8 @@ export class PitchDetector {
     const bufferSize = buffer.length;
     const halfSize = Math.floor(bufferSize / 2);
 
-    // Frequency range for harmonica: ~180 Hz to ~2200 Hz
-    const tauMin = Math.max(2, Math.floor(sampleRate / 2200));
-    const tauMax = Math.min(halfSize - 1, Math.floor(sampleRate / 180));
+    const tauMin = Math.max(2, Math.floor(sampleRate / this.maxFreq));
+    const tauMax = Math.min(halfSize - 1, Math.floor(sampleRate / this.minFreq));
     // More lenient threshold on iOS to catch weaker signals
     const threshold = this.isIOS ? 0.3 : 0.2;
 
@@ -279,7 +292,7 @@ export class PitchDetector {
 
     const frequency = sampleRate / tauEstimate;
 
-    if (frequency < 180 || frequency > 2200) return null;
+    if (frequency < this.minFreq || frequency > this.maxFreq) return null;
 
     return frequency;
   }
