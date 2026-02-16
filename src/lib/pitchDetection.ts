@@ -13,9 +13,11 @@ const AudioCtx =
 export class PitchDetector {
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
+  private gainNode: GainNode | null = null;
   private stream: MediaStream | null = null;
   private source: MediaStreamAudioSourceNode | null = null;
   private isRunning = false;
+  private isIOS = false;
   private buffer: Float32Array<ArrayBuffer> = new Float32Array(0);
   private sampleRate = 44100;
 
@@ -26,32 +28,38 @@ export class PitchDetector {
       throw new Error("Web Audio API is not supported in this browser.");
     }
 
+    this.isIOS =
+      typeof navigator !== "undefined" &&
+      /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     try {
       // Step 1: Request microphone access.
-      // On iOS Safari, use permissive constraints — setting processing
-      // options to `false` can cause getUserMedia to reject on some
-      // iOS versions. We use `ideal` hints instead of hard requirements.
+      // On iOS, let the browser use its native audio processing (AGC, etc.)
+      // since iOS mics are quieter and the built-in AGC helps normalize levels.
+      // On desktop, disable processing for a cleaner signal.
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: { ideal: false },
-            noiseSuppression: { ideal: false },
-            autoGainControl: { ideal: false },
-          },
+          audio: this.isIOS
+            ? {
+                echoCancellation: true,
+                noiseSuppression: false,
+                autoGainControl: true,
+              }
+            : {
+                echoCancellation: { ideal: false },
+                noiseSuppression: { ideal: false },
+                autoGainControl: { ideal: false },
+              },
         });
       } catch {
-        // Fallback: request with minimal constraints if the above fails
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       }
       this.stream = stream;
 
-      // Step 2: Create AudioContext.
-      // iOS Safari requires resume() to be called inside a user gesture.
-      // The caller (button click handler) satisfies this requirement.
+      // Step 2: Create AudioContext and resume (required on iOS).
       this.audioContext = new AudioCtx();
 
-      // iOS Safari starts AudioContext in 'suspended' state — explicitly resume.
       if (this.audioContext.state === "suspended") {
         await this.audioContext.resume();
       }
@@ -59,24 +67,28 @@ export class PitchDetector {
       this.sampleRate = this.audioContext.sampleRate;
 
       // Step 3: Set up the analyser node.
-      // Use a smaller FFT on iOS if the sample rate is high (48kHz)
-      // to keep CPU usage reasonable on mobile.
       this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = this.sampleRate > 44100 ? 8192 : 8192;
+      this.analyser.fftSize = 8192;
       this.analyser.smoothingTimeConstant = 0.0;
       this.analyser.minDecibels = -100;
       this.analyser.maxDecibels = -10;
 
-      // Step 4: Connect the microphone stream to the analyser.
+      // Step 4: Add a gain node to boost the mic signal.
+      // iOS microphones deliver a much quieter signal than desktop mics,
+      // so we amplify before feeding the analyser.
+      this.gainNode = this.audioContext.createGain();
+      this.gainNode.gain.value = this.isIOS ? 4.0 : 1.5;
+
+      // Step 5: Connect: mic → gain → analyser
       this.source = this.audioContext.createMediaStreamSource(this.stream);
-      this.source.connect(this.analyser);
+      this.source.connect(this.gainNode);
+      this.gainNode.connect(this.analyser);
 
       this.buffer = new Float32Array(
         this.analyser.fftSize
       ) as Float32Array<ArrayBuffer>;
       this.isRunning = true;
     } catch (err) {
-      // Clean up partial state on failure
       this.cleanUp();
       console.error("Failed to start pitch detection:", err);
       throw err;
@@ -96,6 +108,14 @@ export class PitchDetector {
         /* already disconnected */
       }
       this.source = null;
+    }
+    if (this.gainNode) {
+      try {
+        this.gainNode.disconnect();
+      } catch {
+        /* already disconnected */
+      }
+      this.gainNode = null;
     }
     if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop());
@@ -131,7 +151,9 @@ export class PitchDetector {
     }
     rms = Math.sqrt(rms / this.buffer.length);
 
-    if (rms < 0.008) return null;
+    // Lower threshold on iOS since mic signal is weaker even after gain boost
+    const silenceThreshold = this.isIOS ? 0.003 : 0.006;
+    if (rms < silenceThreshold) return null;
 
     return this.yinDetect(this.buffer, this.sampleRate);
   }
@@ -168,7 +190,8 @@ export class PitchDetector {
     // Frequency range for harmonica: ~180 Hz to ~2200 Hz
     const tauMin = Math.max(2, Math.floor(sampleRate / 2200));
     const tauMax = Math.min(halfSize - 1, Math.floor(sampleRate / 180));
-    const threshold = 0.2;
+    // More lenient threshold on iOS to catch weaker signals
+    const threshold = this.isIOS ? 0.3 : 0.2;
 
     // Step 1: Compute squared difference function for ALL taus from 1..tauMax
     const diffBuf = new Float32Array(tauMax + 1);
@@ -215,7 +238,7 @@ export class PitchDetector {
           minTau = tau;
         }
       }
-      if (minVal > 0.5) return null;
+      if (minVal > (this.isIOS ? 0.65 : 0.5)) return null;
       candidates.push({ tau: minTau, value: minVal });
     }
 
