@@ -1,25 +1,22 @@
 // Chromatic tuner utilities
 // Detects any note in the chromatic scale (A440 standard tuning)
 
-const NOTE_NAMES = [
-  "C",
-  "C#",
-  "D",
-  "D#",
-  "E",
-  "F",
-  "F#",
-  "G",
-  "G#",
-  "A",
-  "A#",
-  "B",
+const NOTE_NAMES_SHARP = [
+  "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
 ] as const;
 
-export type NoteName = (typeof NOTE_NAMES)[number];
+const NOTE_NAMES_FLAT = [
+  "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B",
+] as const;
+
+export type NoteNameSharp = (typeof NOTE_NAMES_SHARP)[number];
+export type NoteNameFlat = (typeof NOTE_NAMES_FLAT)[number];
+export type NoteName = NoteNameSharp | NoteNameFlat;
+export type AccidentalMode = "sharps" | "flats";
 
 export interface ChromaticNote {
-  name: NoteName;
+  nameSharp: NoteNameSharp;
+  nameFlat: NoteNameFlat;
   octave: number;
   frequency: number;
   midi: number;
@@ -53,7 +50,8 @@ export function findClosestChromaticNote(frequency: number): {
   const octave = Math.floor(midiRounded / 12) - 1;
 
   const note: ChromaticNote = {
-    name: NOTE_NAMES[noteIndex],
+    nameSharp: NOTE_NAMES_SHARP[noteIndex],
+    nameFlat: NOTE_NAMES_FLAT[noteIndex],
     octave,
     frequency: midiToFrequency(midiRounded),
     midi: midiRounded,
@@ -63,14 +61,36 @@ export function findClosestChromaticNote(frequency: number): {
 }
 
 /**
- * Get the display name for a note (e.g., "A" or "C#").
- * Optionally includes the octave number.
+ * Get the display name for a note based on the accidental preference.
  */
-export function noteDisplay(
+export function getNoteName(
   note: ChromaticNote,
-  includeOctave = false
+  mode: AccidentalMode = "sharps"
 ): string {
-  return includeOctave ? `${note.name}${note.octave}` : note.name;
+  return mode === "flats" ? note.nameFlat : note.nameSharp;
+}
+
+/**
+ * Check if a note has an accidental (sharp or flat).
+ */
+export function hasAccidental(
+  note: ChromaticNote,
+  mode: AccidentalMode = "sharps"
+): boolean {
+  const name = getNoteName(note, mode);
+  return name.includes("#") || name.includes("b");
+}
+
+/**
+ * Get the base letter and accidental symbol separately.
+ */
+export function splitNoteName(
+  note: ChromaticNote,
+  mode: AccidentalMode = "sharps"
+): { letter: string; accidental: string } {
+  const name = getNoteName(note, mode);
+  if (name.length === 1) return { letter: name, accidental: "" };
+  return { letter: name[0], accidental: name.slice(1) };
 }
 
 /**

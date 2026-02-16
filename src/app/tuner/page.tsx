@@ -5,7 +5,10 @@ import { PitchDetector } from "@/lib/pitchDetection";
 import {
   findClosestChromaticNote,
   tuningAccuracy,
+  splitNoteName,
+  hasAccidental,
   type ChromaticNote,
+  type AccidentalMode,
 } from "@/lib/chromaticTuner";
 
 export default function TunerPage() {
@@ -14,6 +17,7 @@ export default function TunerPage() {
   const [cents, setCents] = useState(0);
   const [frequency, setFrequency] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [accidentalMode, setAccidentalMode] = useState<AccidentalMode>("flats");
 
   const detectorRef = useRef<PitchDetector | null>(null);
   const animFrameRef = useRef<number>(0);
@@ -126,6 +130,10 @@ export default function TunerPage() {
   const accuracy = tuningAccuracy(cents);
   const isActive = !!note && listening;
 
+  // Note name split for display
+  const noteParts = note ? splitNoteName(note, accidentalMode) : null;
+  const noteHasAccidental = note ? hasAccidental(note, accidentalMode) : false;
+
   // Deviation wheel rotation: map cents (-50..+50) to degrees (-135..+135)
   const wheelRotation = isActive ? (cents / 50) * 135 : 0;
 
@@ -156,6 +164,18 @@ export default function TunerPage() {
         />
       )}
 
+      {/* Sharp/flat toggle */}
+      <button
+        onClick={() =>
+          setAccidentalMode((m) => (m === "sharps" ? "flats" : "sharps"))
+        }
+        className="tuner-accidental-toggle"
+        aria-label="Toggle sharp/flat notation"
+        title={accidentalMode === "sharps" ? "Using sharps (#)" : "Using flats (b)"}
+      >
+        {accidentalMode === "sharps" ? "\u266F" : "\u266D"}
+      </button>
+
       {/* Main content */}
       <div className="tuner-content">
         {/* Sharp/Flat indicators */}
@@ -176,7 +196,7 @@ export default function TunerPage() {
 
           {/* Note display */}
           <div className="tuner-note-container">
-            {isActive ? (
+            {isActive && noteParts ? (
               <>
                 <div
                   className="tuner-note-letter"
@@ -186,9 +206,11 @@ export default function TunerPage() {
                     transition: "color 0.3s ease, text-shadow 0.5s ease",
                   }}
                 >
-                  {note.name.replace("#", "")}
-                  {note.name.includes("#") && (
-                    <span className="tuner-sharp-symbol">#</span>
+                  {noteParts.letter}
+                  {noteHasAccidental && (
+                    <span className="tuner-accidental-symbol">
+                      {noteParts.accidental === "#" ? "\u266F" : "\u266D"}
+                    </span>
                   )}
                 </div>
                 <div className="tuner-octave-label">
