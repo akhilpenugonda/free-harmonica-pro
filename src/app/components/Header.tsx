@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/practice", label: "Practice" },
   { href: "/songs", label: "Songs" },
   { href: "/reference", label: "Note Chart" },
+  { href: "/tuner", label: "Tuner" },
 ];
 
 export default function Header() {
