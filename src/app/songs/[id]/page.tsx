@@ -32,63 +32,78 @@ export default function SongPracticePage() {
   const animFrameRef = useRef<number>(0);
   const matchTimerRef = useRef<number>(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const analyzeRef = useRef<() => void>(() => {});
 
   const targetTab = song?.tabs[currentNote];
   const targetNoteData = targetTab
     ? getNoteForHole(targetTab.hole, targetTab.action)
     : null;
 
-  const analyze = useCallback(() => {
-    if (!detectorRef.current?.running) return;
+  // Keep analysis logic in a ref so the rAF loop always uses the latest
+  // version without a self-referencing useCallback.
+  useEffect(() => {
+    analyzeRef.current = () => {
+      if (!detectorRef.current?.running) return;
 
-    const freq = detectorRef.current.getFrequency();
+      const freq = detectorRef.current.getFrequency();
 
-    if (freq && song && targetNoteData && autoAdvance) {
-      const closest = findClosestNote(freq);
-      setDetectedNote(closest);
+      if (freq && song && targetNoteData && autoAdvance) {
+        const closest = findClosestNote(freq);
+        setDetectedNote(closest);
 
-      if (closest) {
-        const c = getCentsOff(freq, closest.frequency);
-        setCents(c);
+        if (closest) {
+          const c = getCentsOff(freq, closest.frequency);
+          setCents(c);
 
-        if (
-          closest.hole === targetTab!.hole &&
-          closest.action === targetTab!.action &&
-          Math.abs(c) < 25
-        ) {
-          matchTimerRef.current += 1;
-          if (matchTimerRef.current > 12) {
-            matchTimerRef.current = 0;
-            setCurrentNote((prev) => {
-              if (prev >= song.tabs.length - 1) {
-                setCompleted(true);
-                return prev;
-              }
-              return prev + 1;
-            });
+          if (
+            closest.hole === targetTab!.hole &&
+            closest.action === targetTab!.action &&
+            Math.abs(c) < 25
+          ) {
+            matchTimerRef.current += 1;
+            if (matchTimerRef.current > 12) {
+              matchTimerRef.current = 0;
+              setCurrentNote((prev) => {
+                if (prev >= song.tabs.length - 1) {
+                  setCompleted(true);
+                  return prev;
+                }
+                return prev + 1;
+              });
+            }
+          } else {
+            matchTimerRef.current = Math.max(0, matchTimerRef.current - 1);
           }
-        } else {
-          matchTimerRef.current = Math.max(0, matchTimerRef.current - 1);
         }
+      } else if (freq) {
+        const closest = findClosestNote(freq);
+        setDetectedNote(closest);
+        if (closest) {
+          setCents(getCentsOff(freq, closest.frequency));
+        }
+      } else {
+        setDetectedNote(null);
+        setCents(0);
+        matchTimerRef.current = 0;
       }
-    } else if (freq) {
-      const closest = findClosestNote(freq);
-      setDetectedNote(closest);
-      if (closest) {
-        setCents(getCentsOff(freq, closest.frequency));
-      }
-    } else {
-      setDetectedNote(null);
-      setCents(0);
-      matchTimerRef.current = 0;
-    }
-
-    animFrameRef.current = requestAnimationFrame(analyze);
+    };
   }, [song, targetNoteData, targetTab, autoAdvance]);
+
+  const startLoop = useCallback(() => {
+    const tick = () => {
+      analyzeRef.current();
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const stopLoop = useCallback(() => {
+    cancelAnimationFrame(animFrameRef.current);
+  }, []);
 
   const toggleListening = async () => {
     if (listening) {
-      cancelAnimationFrame(animFrameRef.current);
+      stopLoop();
       detectorRef.current?.stop();
       detectorRef.current = null;
       setListening(false);
@@ -102,26 +117,26 @@ export default function SongPracticePage() {
         detectorRef.current = detector;
         setListening(true);
         setIsPlaying(true);
-        animFrameRef.current = requestAnimationFrame(analyze);
-      } catch {
-        setError("Could not access microphone. Please allow microphone access.");
+        startLoop();
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : String(err);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        setError(
+          isIOS
+            ? `Could not access microphone. On iOS, go to Settings → Safari → Microphone and make sure it is enabled. Then reload this page. (${msg})`
+            : `Could not access microphone. Please allow microphone access in your browser settings. (${msg})`
+        );
       }
     }
   };
 
   useEffect(() => {
-    if (listening && detectorRef.current?.running) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = requestAnimationFrame(analyze);
-    }
-  }, [analyze, listening]);
-
-  useEffect(() => {
     return () => {
-      cancelAnimationFrame(animFrameRef.current);
+      stopLoop();
       detectorRef.current?.stop();
     };
-  }, []);
+  }, [stopLoop]);
 
   // Auto-scroll to current note
   useEffect(() => {

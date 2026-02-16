@@ -107,6 +107,7 @@ export default function PracticePage() {
   const detectorRef = useRef<PitchDetector | null>(null);
   const animFrameRef = useRef<number>(0);
   const matchTimerRef = useRef<number>(0);
+  const analyzeRef = useRef<() => void>(() => {});
 
   const currentSequence = SEQUENCES[selectedSequence];
   const targetNote =
@@ -117,59 +118,71 @@ export default function PracticePage() {
         )
       : null;
 
-  const analyze = useCallback(() => {
-    if (!detectorRef.current?.running) return;
+  // Keep the analysis logic in a ref so the rAF loop always calls the
+  // latest version without needing a self-referencing useCallback.
+  useEffect(() => {
+    analyzeRef.current = () => {
+      if (!detectorRef.current?.running) return;
 
-    const freq = detectorRef.current.getFrequency();
-    const vol = detectorRef.current.getVolume();
-    setVolume(vol);
+      const freq = detectorRef.current.getFrequency();
+      const vol = detectorRef.current.getVolume();
+      setVolume(vol);
 
-    if (freq) {
-      setDetectedFreq(freq);
-      const closest = findClosestNote(freq);
-      setDetectedNote(closest);
+      if (freq) {
+        setDetectedFreq(freq);
+        const closest = findClosestNote(freq);
+        setDetectedNote(closest);
 
-      if (closest) {
-        const c = getCentsOff(freq, closest.frequency);
-        setCents(c);
+        if (closest) {
+          const c = getCentsOff(freq, closest.frequency);
+          setCents(c);
 
-        // In sequence mode, check if the detected note matches target
-        if (mode === "sequence" && targetNote) {
-          if (
-            closest.hole === targetNote.hole &&
-            closest.action === targetNote.action &&
-            Math.abs(c) < 20
-          ) {
-            matchTimerRef.current += 1;
-            if (matchTimerRef.current > 15) {
-              // Held note for ~0.5s
-              setScore((prev) => prev + 1);
+          if (mode === "sequence" && targetNote) {
+            if (
+              closest.hole === targetNote.hole &&
+              closest.action === targetNote.action &&
+              Math.abs(c) < 20
+            ) {
+              matchTimerRef.current += 1;
+              if (matchTimerRef.current > 15) {
+                setScore((prev) => prev + 1);
+                matchTimerRef.current = 0;
+                setCurrentStep((prev) => {
+                  if (prev >= currentSequence.notes.length - 1) {
+                    return 0;
+                  }
+                  return prev + 1;
+                });
+              }
+            } else {
               matchTimerRef.current = 0;
-              setCurrentStep((prev) => {
-                if (prev >= currentSequence.notes.length - 1) {
-                  return 0; // Loop back
-                }
-                return prev + 1;
-              });
             }
-          } else {
-            matchTimerRef.current = 0;
           }
         }
+      } else {
+        setDetectedNote(null);
+        setDetectedFreq(null);
+        setCents(0);
+        matchTimerRef.current = 0;
       }
-    } else {
-      setDetectedNote(null);
-      setDetectedFreq(null);
-      setCents(0);
-      matchTimerRef.current = 0;
-    }
-
-    animFrameRef.current = requestAnimationFrame(analyze);
+    };
   }, [mode, targetNote, currentSequence.notes.length]);
+
+  const startLoop = useCallback(() => {
+    const tick = () => {
+      analyzeRef.current();
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    animFrameRef.current = requestAnimationFrame(tick);
+  }, []);
+
+  const stopLoop = useCallback(() => {
+    cancelAnimationFrame(animFrameRef.current);
+  }, []);
 
   const toggleListening = async () => {
     if (listening) {
-      cancelAnimationFrame(animFrameRef.current);
+      stopLoop();
       detectorRef.current?.stop();
       detectorRef.current = null;
       setListening(false);
@@ -184,37 +197,34 @@ export default function PracticePage() {
         await detector.start();
         detectorRef.current = detector;
         setListening(true);
-        animFrameRef.current = requestAnimationFrame(analyze);
-      } catch {
+        startLoop();
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : String(err);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         setError(
-          "Could not access microphone. Please allow microphone access in your browser settings."
+          isIOS
+            ? `Could not access microphone. On iOS, go to Settings → Safari → Microphone and make sure it is enabled. Then reload this page. (${msg})`
+            : `Could not access microphone. Please allow microphone access in your browser settings. (${msg})`
         );
       }
     }
   };
 
-  // Restart analysis loop when analyze callback changes
-  useEffect(() => {
-    if (listening && detectorRef.current?.running) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = requestAnimationFrame(analyze);
-    }
-  }, [analyze, listening]);
-
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      cancelAnimationFrame(animFrameRef.current);
+      stopLoop();
       detectorRef.current?.stop();
     };
-  }, []);
+  }, [stopLoop]);
 
-  // Reset step when sequence changes
-  useEffect(() => {
+  const handleSequenceChange = (index: number) => {
+    setSelectedSequence(index);
     setCurrentStep(0);
     setScore(0);
     matchTimerRef.current = 0;
-  }, [selectedSequence]);
+  };
 
   return (
     <div className="min-h-screen pb-20">
@@ -381,7 +391,7 @@ export default function PracticePage() {
               <label className="text-sm text-muted">Choose a sequence:</label>
               <select
                 value={selectedSequence}
-                onChange={(e) => setSelectedSequence(Number(e.target.value))}
+                onChange={(e) => handleSequenceChange(Number(e.target.value))}
                 className="bg-card border border-card-border rounded-lg px-4 py-2 text-foreground text-sm focus:outline-none focus:border-accent"
               >
                 {SEQUENCES.map((seq, i) => (
