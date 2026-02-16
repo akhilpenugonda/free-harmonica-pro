@@ -1,6 +1,15 @@
 // Pitch detection using YIN algorithm
 // Reference: "YIN, a fundamental frequency estimator for speech and music"
 // by Alain de Cheveigné and Hideki Kawahara
+
+// Polyfill for Safari/older iOS
+const AudioCtx =
+  typeof window !== "undefined"
+    ? window.AudioContext ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitAudioContext
+    : null;
+
 export class PitchDetector {
   private audioContext: AudioContext | null = null;
   private analyser: AnalyserNode | null = null;
@@ -13,27 +22,62 @@ export class PitchDetector {
   async start(): Promise<void> {
     if (this.isRunning) return;
 
+    if (!AudioCtx) {
+      throw new Error("Web Audio API is not supported in this browser.");
+    }
+
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-        },
-      });
+      // Step 1: Request microphone access.
+      // On iOS Safari, use permissive constraints — setting processing
+      // options to `false` can cause getUserMedia to reject on some
+      // iOS versions. We use `ideal` hints instead of hard requirements.
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: { ideal: false },
+            noiseSuppression: { ideal: false },
+            autoGainControl: { ideal: false },
+          },
+        });
+      } catch {
+        // Fallback: request with minimal constraints if the above fails
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      this.stream = stream;
 
-      this.audioContext = new AudioContext();
+      // Step 2: Create AudioContext.
+      // iOS Safari requires resume() to be called inside a user gesture.
+      // The caller (button click handler) satisfies this requirement.
+      this.audioContext = new AudioCtx();
+
+      // iOS Safari starts AudioContext in 'suspended' state — explicitly resume.
+      if (this.audioContext.state === "suspended") {
+        await this.audioContext.resume();
+      }
+
       this.sampleRate = this.audioContext.sampleRate;
-      this.analyser = this.audioContext.createAnalyser();
-      this.analyser.fftSize = 8192;
-      this.analyser.smoothingTimeConstant = 0.0;
 
+      // Step 3: Set up the analyser node.
+      // Use a smaller FFT on iOS if the sample rate is high (48kHz)
+      // to keep CPU usage reasonable on mobile.
+      this.analyser = this.audioContext.createAnalyser();
+      this.analyser.fftSize = this.sampleRate > 44100 ? 8192 : 8192;
+      this.analyser.smoothingTimeConstant = 0.0;
+      this.analyser.minDecibels = -100;
+      this.analyser.maxDecibels = -10;
+
+      // Step 4: Connect the microphone stream to the analyser.
       this.source = this.audioContext.createMediaStreamSource(this.stream);
       this.source.connect(this.analyser);
 
-      this.buffer = new Float32Array(this.analyser.fftSize) as Float32Array<ArrayBuffer>;
+      this.buffer = new Float32Array(
+        this.analyser.fftSize
+      ) as Float32Array<ArrayBuffer>;
       this.isRunning = true;
     } catch (err) {
+      // Clean up partial state on failure
+      this.cleanUp();
       console.error("Failed to start pitch detection:", err);
       throw err;
     }
@@ -41,8 +85,16 @@ export class PitchDetector {
 
   stop(): void {
     this.isRunning = false;
+    this.cleanUp();
+  }
+
+  private cleanUp(): void {
     if (this.source) {
-      this.source.disconnect();
+      try {
+        this.source.disconnect();
+      } catch {
+        /* already disconnected */
+      }
       this.source = null;
     }
     if (this.stream) {
@@ -50,14 +102,25 @@ export class PitchDetector {
       this.stream = null;
     }
     if (this.audioContext) {
-      this.audioContext.close();
+      try {
+        this.audioContext.close();
+      } catch {
+        /* already closed */
+      }
       this.audioContext = null;
     }
     this.analyser = null;
   }
 
   getFrequency(): number | null {
-    if (!this.isRunning || !this.analyser) return null;
+    if (!this.isRunning || !this.analyser || !this.audioContext) return null;
+
+    // iOS Safari: if AudioContext got interrupted (e.g. phone call, lock screen)
+    // try to resume it silently
+    if (this.audioContext.state === "suspended") {
+      this.audioContext.resume();
+      return null;
+    }
 
     this.analyser.getFloatTimeDomainData(this.buffer);
 
@@ -76,14 +139,13 @@ export class PitchDetector {
   getVolume(): number {
     if (!this.isRunning || !this.analyser) return 0;
 
-    const buf = new Float32Array(this.analyser.fftSize) as Float32Array<ArrayBuffer>;
-    this.analyser.getFloatTimeDomainData(buf);
+    this.analyser.getFloatTimeDomainData(this.buffer);
 
     let rms = 0;
-    for (let i = 0; i < buf.length; i++) {
-      rms += buf[i] * buf[i];
+    for (let i = 0; i < this.buffer.length; i++) {
+      rms += this.buffer[i] * this.buffer[i];
     }
-    rms = Math.sqrt(rms / buf.length);
+    rms = Math.sqrt(rms / this.buffer.length);
 
     return Math.min(1, rms * 10);
   }
@@ -96,7 +158,10 @@ export class PitchDetector {
    * YIN pitch detection algorithm with octave correction.
    * Handles the full harmonica range (holes 1-10) reliably.
    */
-  private yinDetect(buffer: Float32Array<ArrayBuffer>, sampleRate: number): number | null {
+  private yinDetect(
+    buffer: Float32Array<ArrayBuffer>,
+    sampleRate: number
+  ): number | null {
     const bufferSize = buffer.length;
     const halfSize = Math.floor(bufferSize / 2);
 
@@ -106,7 +171,6 @@ export class PitchDetector {
     const threshold = 0.2;
 
     // Step 1: Compute squared difference function for ALL taus from 1..tauMax
-    // so the cumulative normalization in Step 2 is accurate even at small tau.
     const diffBuf = new Float32Array(tauMax + 1);
     for (let tau = 1; tau <= tauMax; tau++) {
       let sum = 0;
@@ -131,11 +195,9 @@ export class PitchDetector {
     }
 
     // Step 3: Collect ALL local minima that dip below threshold
-    // (not just the first one). This allows octave correction in Step 5.
     const candidates: { tau: number; value: number }[] = [];
     for (let tau = tauMin; tau <= tauMax; tau++) {
       if (yinBuffer[tau] < threshold) {
-        // Walk to the local minimum
         while (tau + 1 <= tauMax && yinBuffer[tau + 1] < yinBuffer[tau]) {
           tau++;
         }
@@ -157,28 +219,26 @@ export class PitchDetector {
       candidates.push({ tau: minTau, value: minVal });
     }
 
-    // Step 4: Among candidates, pick the best.
-    // Prefer the SHORTEST tau (highest frequency) if its YIN value is
-    // within a tolerance of the absolute best, because octave errors
-    // always produce a candidate at 2x the correct tau.
+    // Step 4: Prefer shortest tau (highest frequency) for octave correction
     let bestCandidate = candidates[0];
     const absoluteBest = candidates.reduce((a, b) =>
       b.value < a.value ? b : a
     );
 
-    // If the first (shortest tau) candidate is reasonably close
-    // to the absolute best value, prefer it (octave correction).
     if (bestCandidate.value < absoluteBest.value + 0.1) {
       // Already the shortest, keep it
     } else {
       bestCandidate = absoluteBest;
     }
 
-    // Also check: if a candidate at ~half the bestCandidate's tau exists,
-    // prefer it (catches octave-down errors from strong harmonics).
+    // Check for octave-down errors
     for (const c of candidates) {
       const ratio = bestCandidate.tau / c.tau;
-      if (ratio > 1.8 && ratio < 2.2 && c.value < bestCandidate.value + 0.15) {
+      if (
+        ratio > 1.8 &&
+        ratio < 2.2 &&
+        c.value < bestCandidate.value + 0.15
+      ) {
         bestCandidate = c;
         break;
       }
@@ -188,11 +248,14 @@ export class PitchDetector {
     if (bestTau < tauMin) return null;
 
     // Step 5: Parabolic interpolation for sub-sample accuracy
-    const tauEstimate = this.parabolicInterpolation(yinBuffer, bestTau, tauMax);
+    const tauEstimate = this.parabolicInterpolation(
+      yinBuffer,
+      bestTau,
+      tauMax
+    );
 
     const frequency = sampleRate / tauEstimate;
 
-    // Sanity check: harmonica range
     if (frequency < 180 || frequency > 2200) return null;
 
     return frequency;
