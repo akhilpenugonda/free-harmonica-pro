@@ -48,11 +48,20 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Free Badge */}
+          {/* Free Badge + Support */}
           <div className="hidden md:flex items-center gap-3">
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/30">
               100% Free
             </span>
+            <a
+              href={siteConfig.buyMeACoffee}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FFDD00]/15 text-[#FFDD00] border border-[#FFDD00]/30 hover:bg-[#FFDD00]/25 transition-colors"
+              title="Buy me a coffee"
+            >
+              ☕ Support
+            </a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,10 +112,18 @@ export default function Header() {
                 {link.label}
               </Link>
             ))}
-            <div className="mt-3 px-4">
+            <div className="mt-3 px-4 flex items-center gap-2">
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/30">
                 100% Free
               </span>
+              <a
+                href={siteConfig.buyMeACoffee}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1 rounded-full text-xs font-semibold bg-[#FFDD00]/15 text-[#FFDD00] border border-[#FFDD00]/30 hover:bg-[#FFDD00]/25 transition-colors"
+              >
+                ☕ Support
+              </a>
             </div>
           </nav>
         )}

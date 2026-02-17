@@ -99,6 +99,12 @@ Contributions are welcome! Feel free to open issues or submit pull requests.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## Support
+
+If you find Free Harmonica useful, consider buying me a coffee. It helps keep the project free and actively maintained.
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/akhilp)
+
 ## License
 
 MIT — see [LICENSE](LICENSE) for details.
