@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { siteConfig } from "@/lib/siteConfig";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -26,7 +27,7 @@ export default function Header() {
               H
             </div>
             <span className="text-lg font-bold text-foreground hidden sm:block">
-              Harmonica <span className="text-accent">Pro</span>
+              {siteConfig.name}
             </span>
           </Link>
 

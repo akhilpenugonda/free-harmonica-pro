@@ -1,12 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { siteConfig } from "@/lib/siteConfig";
 
 export const metadata: Metadata = {
-  title: "Harmonica Pro - Learn Harmonica for Free | Practice Songs & Notes",
-  description:
-    "The first ever completely free harmonica learning platform. Practice single notes with real-time pitch detection, learn famous songs with interactive tabs, and master the 10-hole diatonic harmonica. No sign-ups, no paywalls.",
+  title: `${siteConfig.name} - Learn Harmonica for Free | Practice Songs & Notes`,
+  description: `${siteConfig.description} No sign-ups, no paywalls.`,
   alternates: {
-    canonical: "https://harmonica-pro-iota.vercel.app",
+    canonical: siteConfig.url,
   },
 };
 
@@ -14,10 +14,9 @@ export default function HomePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "Harmonica Pro",
-    description:
-      "The first ever completely free harmonica learning platform with real-time pitch detection, interactive song tabs, and practice tools.",
-    url: "https://harmonica-pro-iota.vercel.app",
+    name: siteConfig.name,
+    description: siteConfig.ogDescription,
+    url: siteConfig.url,
     applicationCategory: "MusicApplication",
     operatingSystem: "Any",
     offers: {
@@ -27,6 +26,7 @@ export default function HomePage() {
     },
     featureList: [
       "Real-time pitch detection",
+      "Full-screen chromatic tuner",
       "Interactive harmonica tabs",
       "10 famous songs",
       "Practice sequences and scales",
@@ -212,7 +212,7 @@ export default function HomePage() {
       <footer className="border-t border-card-border py-8">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-sm text-muted">
-            Harmonica Pro &mdash; The first ever completely free harmonica learning platform.
+            {siteConfig.name} &mdash; {siteConfig.shortDescription}{" "}
             No payments, no subscriptions, no limits.
           </p>
         </div>

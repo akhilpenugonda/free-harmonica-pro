@@ -1,8 +1,9 @@
 import type { MetadataRoute } from "next";
 import { SONGS } from "@/lib/songs";
+import { siteConfig } from "@/lib/siteConfig";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = "https://harmonica-pro-iota.vercel.app";
+  const baseUrl = siteConfig.url;
 
   const songPages = SONGS.map((song) => ({
     url: `${baseUrl}/songs/${song.id}`,
@@ -28,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${baseUrl}/songs`,
       lastModified: new Date(),
       changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/tuner`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
       priority: 0.9,
     },
     {
