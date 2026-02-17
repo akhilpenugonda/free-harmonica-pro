@@ -1,0 +1,12 @@
+{
+  "_note": "Branch naming is enforced via CI (.github/workflows/ci.yml) because branch_name_pattern rules require GitHub Pro/Team. This file is kept for reference only.",
+  "name": "Branch naming convention",
+  "pattern": "^(feature|fix|chore|docs|refactor)/.+",
+  "examples": {
+    "feature/song-search": "New features",
+    "fix/ios-mic-permission": "Bug fixes",
+    "chore/update-next": "Maintenance, deps, config",
+    "docs/add-api-guide": "Documentation only",
+    "refactor/pitch-detection": "Code restructuring"
+  }
+}

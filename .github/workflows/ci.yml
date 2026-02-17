@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, Type Check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_NAME: Free Harmonica
+          NEXT_PUBLIC_SITE_DOMAIN: localhost:3000
+
+  pr-conventions:
+    name: PR Conventions
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check branch naming convention
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          PATTERN="^(feature|fix|chore|docs|refactor)/.+"
+          if [[ ! "$BRANCH" =~ $PATTERN ]]; then
+            echo "::error::Branch name '$BRANCH' does not follow the naming convention."
+            echo ""
+            echo "  Required format: <type>/<description>"
+            echo ""
+            echo "  Allowed prefixes:"
+            echo "    feature/*   — new features"
+            echo "    fix/*       — bug fixes"
+            echo "    chore/*     — maintenance, deps, config"
+            echo "    docs/*      — documentation only"
+            echo "    refactor/*  — code restructuring"
+            echo ""
+            echo "  Example: feature/song-search, fix/ios-mic-permission"
+            exit 1
+          fi
+          echo "Branch name is valid: $BRANCH"
+
+      - name: Check PR title follows Conventional Commits
+        run: |
+          TITLE="${{ github.event.pull_request.title }}"
+          PATTERN="^(feat|fix|chore|docs|refactor|style|test|perf|ci|build|revert)(\(.+\))?: .+"
+          if [[ ! "$TITLE" =~ $PATTERN ]]; then
+            echo "::error::PR title must follow Conventional Commits format."
+            echo ""
+            echo "  Examples:"
+            echo "    feat: add chromatic tuner"
+            echo "    fix: resolve overlapping buttons"
+            echo "    chore: update dependencies"
+            echo "    docs: add contributing guide"
+            echo ""
+            echo "  Format: <type>: <description>"
+            echo "  Types: feat, fix, chore, docs, refactor, style, test, perf, ci, build, revert"
+            exit 1
+          fi
+          echo "PR title is valid: $TITLE"
