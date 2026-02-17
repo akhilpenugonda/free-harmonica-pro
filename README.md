@@ -1,6 +1,6 @@
 # Free Harmonica
 
-The first ever completely free harmonica learning platform. Real-time pitch detection, a full-screen chromatic tuner, interactive song tabs, and structured practice tools — all in the browser.
+The first completely free harmonica learning platform. Real-time pitch detection, a full-screen chromatic tuner, interactive song tabs, and structured practice tools — all in the browser.
 
 **Live:** [freeharmonica.com](https://freeharmonica.com)
 
