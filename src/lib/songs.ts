@@ -1,8 +1,19 @@
 export interface SongNote {
   hole: number;
   action: "blow" | "draw";
-  duration?: number; // in beats
+  duration?: number;
   lyric?: string;
+}
+
+export interface TabLine {
+  tabs?: string;
+  lyric?: string;
+}
+
+export interface TabSection {
+  label?: string;
+  timestamp?: string;
+  lines: TabLine[];
 }
 
 export interface Song {
@@ -14,6 +25,7 @@ export interface Song {
   description: string;
   bpm: number;
   tabs: SongNote[];
+  tabSheet?: TabSection[];
 }
 
 export const SONGS: Song[] = [
@@ -56,6 +68,29 @@ export const SONGS: Song[] = [
       { hole: 5, action: "blow", lyric: "the" },
       { hole: 4, action: "draw", lyric: "sky", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Verse 1",
+        lines: [
+          { tabs: "4 4 6 6 -6 -6 6", lyric: "Twinkle twinkle little star" },
+          { tabs: "-5 -5 5 5 -4 -4 4", lyric: "How I wonder what you are" },
+        ],
+      },
+      {
+        label: "Verse 2",
+        lines: [
+          { tabs: "6 6 -5 -5 5 5 -4", lyric: "Up above the world so high" },
+          { tabs: "6 6 -5 -5 5 5 -4", lyric: "Like a diamond in the sky" },
+        ],
+      },
+      {
+        label: "Verse 1 (Repeat)",
+        lines: [
+          { tabs: "4 4 6 6 -6 -6 6", lyric: "Twinkle twinkle little star" },
+          { tabs: "-5 -5 5 5 -4 -4 4", lyric: "How I wonder what you are" },
+        ],
+      },
+    ],
   },
   {
     id: "mary-had-a-little-lamb",
@@ -94,6 +129,23 @@ export const SONGS: Song[] = [
       { hole: 4, action: "draw", lyric: "as" },
       { hole: 4, action: "blow", lyric: "snow", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Verse 1",
+        lines: [
+          { tabs: "5 -4 4 -4 5 5 5", lyric: "Mary had a little lamb" },
+          { tabs: "-4 -4 -4", lyric: "Little lamb" },
+          { tabs: "5 6 6", lyric: "Little lamb" },
+        ],
+      },
+      {
+        label: "Verse 2",
+        lines: [
+          { tabs: "5 -4 4 -4 5 5 5", lyric: "Mary had a little lamb" },
+          { tabs: "5 -4 -4 5 -4 4", lyric: "Its fleece was white as snow" },
+        ],
+      },
+    ],
   },
   {
     id: "oh-susanna",
@@ -131,6 +183,25 @@ export const SONGS: Song[] = [
       { hole: 4, action: "blow", lyric: "me" },
       { hole: 4, action: "draw", lyric: "", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Verse",
+        lines: [
+          { tabs: "4 -4 5 6 6 -6 6 5", lyric: "Oh I come from Alabama" },
+          { tabs: "4 -4 5 5 -4 4 -4", lyric: "With a banjo on my knee" },
+        ],
+      },
+      {
+        label: "Chorus",
+        lines: [
+          {
+            tabs: "-5 -5 -6 -6 -6 6 6",
+            lyric: "Oh Susanna don't you cry",
+          },
+          { tabs: "5 4 -4", lyric: "For me" },
+        ],
+      },
+    ],
   },
   {
     id: "happy-birthday",
@@ -167,6 +238,19 @@ export const SONGS: Song[] = [
       { hole: 7, action: "blow", lyric: "day" },
       { hole: 8, action: "draw", lyric: "to" },
       { hole: 7, action: "blow", lyric: "you", duration: 2 },
+    ],
+    tabSheet: [
+      {
+        lines: [
+          { tabs: "6 6 -6 6 7 -7", lyric: "Happy birthday to you" },
+          { tabs: "6 6 -6 6 -8 7", lyric: "Happy birthday to you" },
+          {
+            tabs: "6 6 9 8 7 -7 -6",
+            lyric: "Happy birthday dear friend",
+          },
+          { tabs: "-9 -9 8 7 -8 7", lyric: "Happy birthday to you" },
+        ],
+      },
     ],
   },
   {
@@ -212,6 +296,29 @@ export const SONGS: Song[] = [
       { hole: 4, action: "draw", lyric: "ing" },
       { hole: 4, action: "blow", lyric: "in", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Verse",
+        lines: [
+          { tabs: "4 5 -5 6", lyric: "Oh when the saints" },
+          { tabs: "4 5 -5 6", lyric: "Oh when the saints" },
+          {
+            tabs: "4 5 -5 6 5 4 5 -4",
+            lyric: "Oh when the saints go marching in",
+          },
+        ],
+      },
+      {
+        label: "Bridge",
+        lines: [
+          { tabs: "5 -4 4 4 5 6 6 6", lyric: "How I want to be in that num-" },
+          {
+            tabs: "-5 5 -5 6 5 4 -4 4",
+            lyric: "ber when the saints go marching in",
+          },
+        ],
+      },
+    ],
   },
   {
     id: "ode-to-joy",
@@ -254,6 +361,34 @@ export const SONGS: Song[] = [
       { hole: 4, action: "blow", lyric: "" },
       { hole: 4, action: "blow", lyric: "", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Part A",
+        lines: [
+          {
+            tabs: "5 5 -5 6 6 -5 5 -4",
+            lyric: "Joyful joyful we adore thee",
+          },
+          {
+            tabs: "4 4 -4 5 5 -4 -4",
+            lyric: "God of glory Lord of love",
+          },
+        ],
+      },
+      {
+        label: "Part A (Repeat)",
+        lines: [
+          {
+            tabs: "5 5 -5 6 6 -5 5 -4",
+            lyric: "Hearts unfold like flowers before thee",
+          },
+          {
+            tabs: "4 4 -4 5 -4 4 4",
+            lyric: "Opening to the sun above",
+          },
+        ],
+      },
+    ],
   },
   {
     id: "amazing-grace",
@@ -280,6 +415,32 @@ export const SONGS: Song[] = [
       { hole: 4, action: "draw", lyric: "wretch" },
       { hole: 4, action: "blow", lyric: "like", duration: 2 },
       { hole: 4, action: "draw", lyric: "me", duration: 3 },
+    ],
+    tabSheet: [
+      {
+        label: "Verse 1",
+        lines: [
+          {
+            tabs: "4 -4 5 -4 5 -5",
+            lyric: "Amazing grace how sweet",
+          },
+          { tabs: "5 -4 4", lyric: "The sound" },
+          { tabs: "-4 -3 4", lyric: "That saved a" },
+          { tabs: "-4 4 -4", lyric: "Wretch like me" },
+        ],
+      },
+      {
+        label: "Verse 2",
+        lines: [
+          {
+            tabs: "4 -4 5 -4 5 -5",
+            lyric: "I once was lost",
+          },
+          { tabs: "5 -4 4", lyric: "But now" },
+          { tabs: "-4 -3 4", lyric: "Am found was" },
+          { tabs: "-4 4 -4", lyric: "Blind but now I see" },
+        ],
+      },
     ],
   },
   {
@@ -318,6 +479,40 @@ export const SONGS: Song[] = [
       { hole: 6, action: "draw", lyric: "pen" },
       { hole: 5, action: "draw", lyric: "sleigh", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Chorus",
+        lines: [
+          { tabs: "5 5 5", lyric: "Jingle bells" },
+          { tabs: "5 5 5", lyric: "Jingle bells" },
+          { tabs: "5 6 4 -4 5", lyric: "Jingle all the way" },
+          {
+            tabs: "-5 -5 -5 5 5 5",
+            lyric: "Oh what fun it is to",
+          },
+          {
+            tabs: "-4 -4 4 -4 5 6 -6 -5",
+            lyric: "Ride in a one horse open sleigh",
+          },
+        ],
+      },
+      {
+        label: "Chorus (Repeat)",
+        lines: [
+          { tabs: "5 5 5", lyric: "Jingle bells" },
+          { tabs: "5 5 5", lyric: "Jingle bells" },
+          { tabs: "5 6 4 -4 5", lyric: "Jingle all the way" },
+          {
+            tabs: "-5 -5 -5 5 5 5",
+            lyric: "Oh what fun it is to",
+          },
+          {
+            tabs: "-4 -4 4 -4 5 6 -6 -5",
+            lyric: "Ride in a one horse open sleigh",
+          },
+        ],
+      },
+    ],
   },
   {
     id: "love-me-do",
@@ -352,6 +547,26 @@ export const SONGS: Song[] = [
       { hole: 3, action: "draw", lyric: "me" },
       { hole: 2, action: "draw", lyric: "do", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Intro Riff",
+        lines: [
+          { tabs: "-5 5 -4", lyric: "Love me do" },
+          { tabs: "-2 -2 -2 -2", lyric: "(harmonica riff)" },
+        ],
+      },
+      {
+        label: "Verse",
+        lines: [
+          { tabs: "-5 -5 -5 5 5 5 -4", lyric: "Love me do" },
+          { tabs: "-2 -2 -2 -2 -2", lyric: "(harmonica riff)" },
+        ],
+      },
+      {
+        label: "Ending",
+        lines: [{ tabs: "4 -3 -2", lyric: "Love me do" }],
+      },
+    ],
   },
   {
     id: "piano-man",
@@ -364,21 +579,20 @@ export const SONGS: Song[] = [
     bpm: 90,
     tabs: [
       { hole: 6, action: "blow", lyric: "" },
-      { hole: 5, action: "draw", lyric: "" },
+      { hole: 6, action: "draw", lyric: "" },
       { hole: 6, action: "blow", lyric: "" },
       { hole: 5, action: "draw", lyric: "" },
       { hole: 5, action: "blow", lyric: "" },
       { hole: 5, action: "draw", lyric: "" },
       { hole: 5, action: "blow", lyric: "" },
       { hole: 4, action: "blow", lyric: "", duration: 1.5 },
-      { hole: 4, action: "blow", lyric: "" },
       { hole: 4, action: "draw", lyric: "" },
       { hole: 5, action: "blow", lyric: "" },
       { hole: 4, action: "draw", lyric: "", duration: 2 },
       { hole: 5, action: "blow", lyric: "" },
       { hole: 5, action: "draw", lyric: "" },
       { hole: 6, action: "blow", lyric: "" },
-      { hole: 5, action: "draw", lyric: "" },
+      { hole: 6, action: "draw", lyric: "" },
       { hole: 6, action: "blow", lyric: "" },
       { hole: 5, action: "draw", lyric: "" },
       { hole: 5, action: "blow", lyric: "" },
@@ -391,6 +605,79 @@ export const SONGS: Song[] = [
       { hole: 4, action: "draw", lyric: "" },
       { hole: 4, action: "blow", lyric: "", duration: 2 },
     ],
+    tabSheet: [
+      {
+        label: "Intro / Main Riff",
+        timestamp: "0:08",
+        lines: [
+          { tabs: "6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -4 5 -4" },
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 4" },
+        ],
+      },
+      {
+        label: "Verse 1",
+        timestamp: "0:47",
+        lines: [
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 5" },
+          {
+            lyric: "Making love to his tonic and gin",
+          },
+        ],
+      },
+      {
+        label: "Bridge",
+        timestamp: "1:23",
+        lines: [{ tabs: "-4 5 -5" }],
+      },
+      {
+        label: "Chorus",
+        timestamp: "1:42",
+        lines: [
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 5" },
+          { lyric: "You've got us feeling alright" },
+        ],
+      },
+      {
+        label: "Verse 2",
+        timestamp: "3:08",
+        lines: [
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 5" },
+          { lyric: "And probably will be for life" },
+        ],
+      },
+      {
+        label: "(Piano Solo)",
+        timestamp: "3:39",
+        lines: [{ tabs: "-4 5 -5" }],
+      },
+      {
+        label: "Chorus (Repeat)",
+        timestamp: "3:57",
+        lines: [
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 5" },
+          { lyric: "You've got us feeling alright" },
+        ],
+      },
+      {
+        timestamp: "4:55",
+        lines: [{ tabs: "-4 5 -5" }],
+      },
+      {
+        label: "Outro",
+        timestamp: "5:13",
+        lines: [
+          { tabs: "5 -5 6 -6 6 -5 5 -5 5" },
+          { tabs: "4 -5 5 -4 5" },
+          { lyric: "You've got us feeling alright" },
+        ],
+      },
+    ],
   },
 ];
 
@@ -398,8 +685,6 @@ export function getSongById(id: string): Song | undefined {
   return SONGS.find((s) => s.id === id);
 }
 
-export function getSongsByDifficulty(
-  difficulty: Song["difficulty"]
-): Song[] {
+export function getSongsByDifficulty(difficulty: Song["difficulty"]): Song[] {
   return SONGS.filter((s) => s.difficulty === difficulty);
 }

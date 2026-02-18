@@ -6,7 +6,7 @@ import Link from "next/link";
 import HarmonicaVisual from "../../components/HarmonicaVisual";
 import PitchMeter from "../../components/PitchMeter";
 import { PitchDetector } from "@/lib/pitchDetection";
-import { getSongById } from "@/lib/songs";
+import { getSongById, type TabSection } from "@/lib/songs";
 import {
   findClosestNote,
   getCentsOff,
@@ -21,6 +21,8 @@ export default function SongPracticePage() {
   const params = useParams();
   const song = getSongById(params.id as string);
 
+  type ViewMode = "practice" | "tabsheet";
+  const [viewMode, setViewMode] = useState<ViewMode>("practice");
   const [harpKey, setHarpKey] = useState<HarmonicaKey>("C");
   const [currentNote, setCurrentNote] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -212,6 +214,48 @@ export default function SongPracticePage() {
           </div>
         </div>
 
+        {/* View Mode Toggle */}
+        {song.tabSheet && (
+          <div className="flex items-center justify-center mb-8">
+            <div className="inline-flex rounded-xl p-1 bg-card border border-card-border">
+              <button
+                onClick={() => setViewMode("practice")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === "practice"
+                    ? "bg-accent text-white shadow-lg"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Practice
+              </button>
+              <button
+                onClick={() => setViewMode("tabsheet")}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  viewMode === "tabsheet"
+                    ? "bg-accent text-white shadow-lg"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Tab Sheet
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab Sheet View ── */}
+        {viewMode === "tabsheet" && song.tabSheet && (
+          <TabSheetView sections={song.tabSheet} />
+        )}
+
+        {/* ── Practice View ── */}
+        {viewMode === "practice" && (
+          <>
         {/* Completion message */}
         {completed && (
           <div className="glass rounded-2xl p-8 mb-8 text-center border-success/30 animate-slide-up">
@@ -449,7 +493,84 @@ export default function SongPracticePage() {
             </button>
           </div>
         </div>
+          </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function TabToken({ token }: { token: string }) {
+  const isDraw = token.startsWith("-");
+  return (
+    <span
+      className={`inline-block min-w-[1.8rem] text-center font-mono font-bold text-lg sm:text-xl ${
+        isDraw ? "text-purple-400" : "text-cyan-400"
+      }`}
+    >
+      {token}
+    </span>
+  );
+}
+
+function TabSheetView({ sections }: { sections: TabSection[] }) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      {/* Legend */}
+      <div className="glass rounded-2xl p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+          <span className="flex items-center gap-2">
+            <span className="font-mono font-bold text-cyan-400">4</span>
+            <span className="text-muted">= Blow (exhale)</span>
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="font-mono font-bold text-purple-400">-4</span>
+            <span className="text-muted">= Draw (inhale)</span>
+          </span>
+          <span className="text-muted/60">Numbers are hole positions 1-10</span>
+        </div>
+      </div>
+
+      {/* Sections */}
+      {sections.map((section, sIdx) => (
+        <div key={sIdx} className="glass rounded-2xl p-5 sm:p-6">
+          {/* Section header */}
+          {(section.label || section.timestamp) && (
+            <div className="flex items-center gap-3 mb-4">
+              {section.label && (
+                <h3 className="text-sm font-semibold text-accent uppercase tracking-wide">
+                  {section.label}
+                </h3>
+              )}
+              {section.timestamp && (
+                <span className="text-xs text-muted bg-white/5 px-2 py-0.5 rounded-full font-mono">
+                  {section.timestamp}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Lines */}
+          <div className="space-y-3">
+            {section.lines.map((line, lIdx) => (
+              <div key={lIdx}>
+                {line.tabs && (
+                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
+                    {line.tabs.split(/\s+/).map((token, tIdx) => (
+                      <TabToken key={tIdx} token={token} />
+                    ))}
+                  </div>
+                )}
+                {line.lyric && (
+                  <p className="text-sm text-muted/80 italic mt-1 ml-0.5">
+                    {line.lyric}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
