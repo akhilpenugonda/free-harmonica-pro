@@ -9,7 +9,9 @@ import {
   getCentsOff,
   getNoteForHole,
   tabNotation,
+  HARMONICA_KEYS,
   type HarmonicaNote,
+  type HarmonicaKey,
 } from "@/lib/harmonicaData";
 
 type PracticeMode = "free" | "sequence";
@@ -94,6 +96,7 @@ const SEQUENCES: Sequence[] = [
 
 export default function PracticePage() {
   const [mode, setMode] = useState<PracticeMode>("free");
+  const [harpKey, setHarpKey] = useState<HarmonicaKey>("C");
   const [listening, setListening] = useState(false);
   const [detectedNote, setDetectedNote] = useState<HarmonicaNote | null>(null);
   const [detectedFreq, setDetectedFreq] = useState<number | null>(null);
@@ -114,7 +117,8 @@ export default function PracticePage() {
     mode === "sequence"
       ? getNoteForHole(
           currentSequence.notes[currentStep].hole,
-          currentSequence.notes[currentStep].action
+          currentSequence.notes[currentStep].action,
+          harpKey
         )
       : null;
 
@@ -130,7 +134,7 @@ export default function PracticePage() {
 
       if (freq) {
         setDetectedFreq(freq);
-        const closest = findClosestNote(freq);
+        const closest = findClosestNote(freq, harpKey);
         setDetectedNote(closest);
 
         if (closest) {
@@ -166,7 +170,7 @@ export default function PracticePage() {
         matchTimerRef.current = 0;
       }
     };
-  }, [mode, targetNote, currentSequence.notes.length]);
+  }, [mode, targetNote, currentSequence.notes.length, harpKey]);
 
   const startLoop = useCallback(() => {
     const tick = () => {
@@ -239,8 +243,8 @@ export default function PracticePage() {
           </p>
         </div>
 
-        {/* Mode Toggle */}
-        <div className="flex items-center justify-center gap-4 mb-10">
+        {/* Mode Toggle + Key Selector */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
           <div className="inline-flex rounded-xl p-1 bg-card border border-card-border">
             <button
               onClick={() => setMode("free")}
@@ -262,6 +266,22 @@ export default function PracticePage() {
             >
               Sequences
             </button>
+          </div>
+
+          <div className="inline-flex rounded-xl p-1 bg-card border border-card-border">
+            {HARMONICA_KEYS.map((k) => (
+              <button
+                key={k}
+                onClick={() => setHarpKey(k)}
+                className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                  harpKey === k
+                    ? "bg-accent text-white shadow-lg"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                Key {k}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -342,6 +362,7 @@ export default function PracticePage() {
           <HarmonicaVisual
             activeHole={detectedNote?.hole}
             activeAction={detectedNote?.action}
+            harpKey={harpKey}
           />
 
           {/* Mic button */}
@@ -411,7 +432,7 @@ export default function PracticePage() {
             {/* Sequence notes display */}
             <div className="flex flex-wrap items-center justify-center gap-3">
               {currentSequence.notes.map((note, idx) => {
-                const noteData = getNoteForHole(note.hole, note.action);
+                const noteData = getNoteForHole(note.hole, note.action, harpKey);
                 const isCurrent = idx === currentStep;
                 const isPast = idx < currentStep;
 

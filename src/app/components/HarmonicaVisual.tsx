@@ -1,6 +1,6 @@
 "use client";
 
-import { getNoteForHole } from "@/lib/harmonicaData";
+import { getNoteForHole, type HarmonicaKey } from "@/lib/harmonicaData";
 
 interface HarmonicaVisualProps {
   activeHole?: number | null;
@@ -8,6 +8,7 @@ interface HarmonicaVisualProps {
   onHoleClick?: (hole: number, action: "blow" | "draw") => void;
   interactive?: boolean;
   showLabels?: boolean;
+  harpKey?: HarmonicaKey;
 }
 
 export default function HarmonicaVisual({
@@ -16,6 +17,7 @@ export default function HarmonicaVisual({
   onHoleClick,
   interactive = false,
   showLabels = true,
+  harpKey = "C",
 }: HarmonicaVisualProps) {
   const holes = Array.from({ length: 10 }, (_, i) => i + 1);
 
@@ -25,7 +27,7 @@ export default function HarmonicaVisual({
       {showLabels && (
         <div className="flex justify-center gap-1 sm:gap-2 mb-2">
           {holes.map((hole) => {
-            const note = getNoteForHole(hole, "blow");
+            const note = getNoteForHole(hole, "blow", harpKey);
             const isActive = activeHole === hole && activeAction === "blow";
             return (
               <div
@@ -113,7 +115,7 @@ export default function HarmonicaVisual({
       {showLabels && (
         <div className="flex justify-center gap-1 sm:gap-2 mt-2">
           {holes.map((hole) => {
-            const note = getNoteForHole(hole, "draw");
+            const note = getNoteForHole(hole, "draw", harpKey);
             const isActive = activeHole === hole && activeAction === "draw";
             return (
               <div

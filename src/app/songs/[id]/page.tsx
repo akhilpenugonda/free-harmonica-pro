@@ -12,13 +12,16 @@ import {
   getCentsOff,
   getNoteForHole,
   tabNotation,
+  HARMONICA_KEYS,
   type HarmonicaNote,
+  type HarmonicaKey,
 } from "@/lib/harmonicaData";
 
 export default function SongPracticePage() {
   const params = useParams();
   const song = getSongById(params.id as string);
 
+  const [harpKey, setHarpKey] = useState<HarmonicaKey>("C");
   const [currentNote, setCurrentNote] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [listening, setListening] = useState(false);
@@ -36,7 +39,7 @@ export default function SongPracticePage() {
 
   const targetTab = song?.tabs[currentNote];
   const targetNoteData = targetTab
-    ? getNoteForHole(targetTab.hole, targetTab.action)
+    ? getNoteForHole(targetTab.hole, targetTab.action, harpKey)
     : null;
 
   // Keep analysis logic in a ref so the rAF loop always uses the latest
@@ -48,7 +51,7 @@ export default function SongPracticePage() {
       const freq = detectorRef.current.getFrequency();
 
       if (freq && song && targetNoteData && autoAdvance) {
-        const closest = findClosestNote(freq);
+        const closest = findClosestNote(freq, harpKey);
         setDetectedNote(closest);
 
         if (closest) {
@@ -76,7 +79,7 @@ export default function SongPracticePage() {
           }
         }
       } else if (freq) {
-        const closest = findClosestNote(freq);
+        const closest = findClosestNote(freq, harpKey);
         setDetectedNote(closest);
         if (closest) {
           setCents(getCentsOff(freq, closest.frequency));
@@ -87,7 +90,7 @@ export default function SongPracticePage() {
         matchTimerRef.current = 0;
       }
     };
-  }, [song, targetNoteData, targetTab, autoAdvance]);
+  }, [song, targetNoteData, targetTab, autoAdvance, harpKey]);
 
   const startLoop = useCallback(() => {
     const tick = () => {
@@ -262,6 +265,22 @@ export default function SongPracticePage() {
             Reset
           </button>
 
+          <div className="inline-flex rounded-xl p-1 bg-card border border-card-border">
+            {HARMONICA_KEYS.map((k) => (
+              <button
+                key={k}
+                onClick={() => setHarpKey(k)}
+                className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
+                  harpKey === k
+                    ? "bg-accent text-white shadow-lg"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                Key {k}
+              </button>
+            ))}
+          </div>
+
           <label className="flex items-center gap-2 text-sm text-muted cursor-pointer">
             <input
               type="checkbox"
@@ -337,6 +356,7 @@ export default function SongPracticePage() {
                     ? detectedNote.action
                     : targetTab.action
                 }
+                harpKey={harpKey}
               />
             </div>
           </div>

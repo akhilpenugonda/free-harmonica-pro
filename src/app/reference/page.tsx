@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import HarmonicaVisual from "../components/HarmonicaVisual";
-import { getNoteForHole, getBlowNotes, getDrawNotes } from "@/lib/harmonicaData";
+import {
+  getNoteForHole,
+  getBlowNotes,
+  getDrawNotes,
+  HARMONICA_KEYS,
+  type HarmonicaKey,
+} from "@/lib/harmonicaData";
 
 export default function ReferencePage() {
   const [activeHole, setActiveHole] = useState<number | null>(null);
   const [activeAction, setActiveAction] = useState<"blow" | "draw" | null>(null);
+  const [harpKey, setHarpKey] = useState<HarmonicaKey>("C");
 
-  const blowNotes = getBlowNotes();
-  const drawNotes = getDrawNotes();
+  const blowNotes = getBlowNotes(harpKey);
+  const drawNotes = getDrawNotes(harpKey);
 
   const handleHoleClick = (hole: number, action: "blow" | "draw") => {
     if (activeHole === hole && activeAction === action) {
@@ -23,7 +30,7 @@ export default function ReferencePage() {
 
   const selectedNote =
     activeHole && activeAction
-      ? getNoteForHole(activeHole, activeAction)
+      ? getNoteForHole(activeHole, activeAction, harpKey)
       : null;
 
   return (
@@ -34,10 +41,25 @@ export default function ReferencePage() {
           <h1 className="text-3xl sm:text-4xl font-bold mb-3">
             <span className="gradient-text">Note</span> Reference Chart
           </h1>
-          <p className="text-muted max-w-lg mx-auto">
-            Complete note layout for a standard 10-hole diatonic harmonica in the
-            key of C. Click any hole to see its details.
+          <p className="text-muted max-w-lg mx-auto mb-4">
+            Complete note layout for a standard 10-hole diatonic harmonica.
+            Click any hole to see its details.
           </p>
+          <div className="flex items-center justify-center gap-2">
+            {HARMONICA_KEYS.map((k) => (
+              <button
+                key={k}
+                onClick={() => { setHarpKey(k); setActiveHole(null); setActiveAction(null); }}
+                className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all ${
+                  harpKey === k
+                    ? "bg-accent text-white"
+                    : "bg-white/5 text-muted hover:text-foreground hover:bg-white/10"
+                }`}
+              >
+                Key of {k}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Interactive Harmonica */}
@@ -49,6 +71,7 @@ export default function ReferencePage() {
             activeHole={activeHole}
             activeAction={activeAction}
             onHoleClick={handleHoleClick}
+            harpKey={harpKey}
             interactive
           />
 
@@ -183,13 +206,14 @@ export default function ReferencePage() {
 
               <div className="flex gap-3">
                 <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-success/15 flex items-center justify-center text-success text-sm font-bold">
-                  C
+                  {harpKey}
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">Key of C</h3>
+                  <h3 className="font-medium mb-1">Key of {harpKey}</h3>
                   <p className="text-sm text-muted">
-                    This chart is for a standard diatonic harmonica in C. Most
-                    beginner songs use this key.
+                    {harpKey === "C"
+                      ? "Key of C is the most common. Most beginner songs use this key."
+                      : "Key of G sits lower and is great for folk, blues, and country."}
                   </p>
                 </div>
               </div>
