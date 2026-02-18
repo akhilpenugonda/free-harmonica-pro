@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+.next/
+dist/
+build/
+out/
+coverage/
+
+# Local environment and secrets
+.env.local
+.env.*.local
+
+# Logs and temp files
+*.log
+.DS_Store
+tmp/
+temp/
+
+# VCS and editor internals
+.git/
+.cursor/

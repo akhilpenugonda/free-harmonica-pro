@@ -16,4 +16,5 @@ export const siteConfig = {
   ogDescription:
     "The first ever completely free harmonica learning platform. Real-time pitch detection, chromatic tuner, famous song tabs, and interactive practice tools.",
   buyMeACoffee: "https://buymeacoffee.com/akhilp",
+  githubUrl: "https://github.com/akhilpenugonda/free-harmonica-pro",
 } as const;

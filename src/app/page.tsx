@@ -208,15 +208,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-card-border py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-sm text-muted">
-            {siteConfig.name} &mdash; {siteConfig.shortDescription}{" "}
-            No payments, no subscriptions, no limits.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }
