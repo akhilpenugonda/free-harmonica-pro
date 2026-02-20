@@ -16,6 +16,8 @@ import {
   type HarmonicaNote,
   type HarmonicaKey,
 } from "@/lib/harmonicaData";
+import { markSongCompleted } from "@/lib/progress";
+import MilestoneBanner from "../../components/MilestoneBanner";
 
 export default function SongPracticePage() {
   const params = useParams();
@@ -30,6 +32,7 @@ export default function SongPracticePage() {
   const [detectedNote, setDetectedNote] = useState<HarmonicaNote | null>(null);
   const [cents, setCents] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +46,13 @@ export default function SongPracticePage() {
   const targetNoteData = targetTab
     ? getNoteForHole(targetTab.hole, targetTab.action, harpKey)
     : null;
+
+  const completeSong = () => {
+    if (!song) return;
+    setCompleted(true);
+    markSongCompleted(song.id);
+    setShowMilestone(true);
+  };
 
   // Keep analysis logic in a ref so the rAF loop always uses the latest
   // version without a self-referencing useCallback.
@@ -70,7 +80,7 @@ export default function SongPracticePage() {
               matchTimerRef.current = 0;
               setCurrentNote((prev) => {
                 if (prev >= song.tabs.length - 1) {
-                  setCompleted(true);
+                  completeSong();
                   return prev;
                 }
                 return prev + 1;
@@ -92,6 +102,7 @@ export default function SongPracticePage() {
         matchTimerRef.current = 0;
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [song, targetNoteData, targetTab, autoAdvance, harpKey]);
 
   const startLoop = useCallback(() => {
@@ -484,7 +495,7 @@ export default function SongPracticePage() {
                   setIsPlaying(true);
                   setCompleted(false);
                 } else {
-                  setCompleted(true);
+                  completeSong();
                 }
               }}
               className="px-4 py-2 rounded-lg border border-card-border text-sm font-medium hover:bg-white/5 transition-all"
@@ -496,6 +507,8 @@ export default function SongPracticePage() {
           </>
         )}
       </div>
+
+      {showMilestone && <MilestoneBanner />}
     </div>
   );
 }

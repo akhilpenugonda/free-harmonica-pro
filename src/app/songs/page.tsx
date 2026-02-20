@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SONGS } from "@/lib/songs";
 import { siteConfig } from "@/lib/siteConfig";
 import SongList from "../components/SongList";
+import MilestoneTracker from "../components/MilestoneTracker";
 
 export const metadata: Metadata = {
   title: "Harmonica Songs - Free Interactive Tabs",
@@ -29,6 +30,8 @@ export default function SongsPage() {
 
         <SongList songs={SONGS} />
       </div>
+
+      <MilestoneTracker />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { siteConfig } from "@/lib/siteConfig";
 
 export default function Footer() {
@@ -28,6 +29,15 @@ export default function Footer() {
               </svg>
               Open Source
             </a>
+
+            <span className="text-card-border">|</span>
+
+            <Link
+              href="/supporters"
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              Supporters
+            </Link>
 
             <span className="text-card-border">|</span>
 

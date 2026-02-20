@@ -1,9 +1,30 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { Song } from "@/lib/songs";
 import { siteConfig } from "@/lib/siteConfig";
+import { getCompletedSongIds, getSongsCompleted } from "@/lib/progress";
+import { MILESTONES } from "@/lib/milestones";
+
+const subscribe = () => () => {};
+
+let cachedIds: string[] = [];
+let cachedSet = new Set<string>();
+
+function getCompletedIdSet(): Set<string> {
+  const ids = getCompletedSongIds();
+  if (
+    ids.length !== cachedIds.length ||
+    ids.some((id, i) => id !== cachedIds[i])
+  ) {
+    cachedIds = ids;
+    cachedSet = new Set(ids);
+  }
+  return cachedSet;
+}
+
+const serverSet = new Set<string>();
 
 const difficultyColors: Record<Song["difficulty"], string> = {
   Beginner: "bg-success/15 text-success border-success/30",
@@ -21,6 +42,21 @@ const SONG_REQUEST_URL = `${siteConfig.githubUrl}/issues/new?template=song_reque
 
 export default function SongList({ songs }: { songs: Song[] }) {
   const [query, setQuery] = useState("");
+
+  const completedIds = useSyncExternalStore(
+    subscribe,
+    getCompletedIdSet,
+    () => serverSet,
+  );
+  const completedCount = useSyncExternalStore(
+    subscribe,
+    getSongsCompleted,
+    () => 0,
+  );
+
+  const totalSongs = songs.length;
+  const progressPct = totalSongs > 0 ? Math.round((completedCount / totalSongs) * 100) : 0;
+  const nextMilestone = MILESTONES.find((m) => m.threshold > completedCount);
 
   const filtered = useMemo(() => {
     if (!query.trim()) return songs;
@@ -45,6 +81,50 @@ export default function SongList({ songs }: { songs: Song[] }) {
 
   return (
     <>
+      {/* Progress Stats */}
+      {completedCount > 0 && (
+        <div className="glass rounded-2xl p-6 mb-10 animate-fade-in">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            {/* Stats */}
+            <div className="flex items-center gap-6 shrink-0">
+              <div className="text-center">
+                <div className="text-3xl font-bold gradient-text">
+                  {completedCount}
+                </div>
+                <div className="text-xs text-muted mt-1">Completed</div>
+              </div>
+              <div className="w-px h-10 bg-card-border" />
+              <div className="text-center">
+                <div className="text-3xl font-bold text-muted">
+                  {totalSongs - completedCount}
+                </div>
+                <div className="text-xs text-muted mt-1">Remaining</div>
+              </div>
+            </div>
+
+            {/* Progress bar + milestone */}
+            <div className="flex-1 w-full min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">
+                  {progressPct}% complete
+                </span>
+                {nextMilestone && (
+                  <span className="text-xs text-muted">
+                    {nextMilestone.emoji} Next: {nextMilestone.title} ({nextMilestone.threshold - completedCount} more)
+                  </span>
+                )}
+              </div>
+              <div className="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-linear-to-r from-accent to-accent-secondary transition-all duration-500"
+                  style={{ width: `${progressPct}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Search */}
       <div className="max-w-md mx-auto mb-10 animate-fade-in">
         <div className="relative">
@@ -91,8 +171,17 @@ export default function SongList({ songs }: { songs: Song[] }) {
                 <Link
                   key={song.id}
                   href={`/songs/${song.id}`}
-                  className="glass rounded-xl p-6 hover:border-accent/30 transition-all group hover:scale-[1.02] active:scale-[0.98]"
+                  className={`glass rounded-xl p-6 hover:border-accent/30 transition-all group hover:scale-[1.02] active:scale-[0.98] relative ${
+                    completedIds.has(song.id) ? "border-success/20" : ""
+                  }`}
                 >
+                  {completedIds.has(song.id) && (
+                    <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-success/20 border border-success/40 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-lg font-semibold group-hover:text-accent transition-colors leading-tight">
                       {song.title}

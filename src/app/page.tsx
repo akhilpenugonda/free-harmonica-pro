@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { siteConfig } from "@/lib/siteConfig";
+import { SONGS } from "@/lib/songs";
+import ProgressSummary from "./components/ProgressSummary";
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} - Learn Harmonica for Free | Practice Songs & Notes`,
@@ -84,8 +86,13 @@ export default function HomePage() {
             </div>
           </div>
 
+          {/* Progress summary (only shows if user has completed songs) */}
+          <div className="mt-10 max-w-lg mx-auto animate-fade-in" style={{ animationDelay: "0.2s" }}>
+            <ProgressSummary totalSongs={SONGS.length} />
+          </div>
+
           {/* Hero harmonica illustration */}
-          <div className="mt-20 flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+          <div className="mt-12 flex justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
             <div className="relative">
               <div className="flex gap-1.5 sm:gap-2 p-4 sm:p-6 rounded-2xl bg-gradient-to-b from-gray-700 via-gray-800 to-gray-900 shadow-2xl border border-gray-600/30">
                 {Array.from({ length: 10 }, (_, i) => (
