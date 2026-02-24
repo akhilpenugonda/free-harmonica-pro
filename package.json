@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",
@@ -15,12 +16,15 @@
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },
+  "overrides": {
+    "minimatch": "^10.2.1"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
+    "eslint": "^10.0.2",
     "eslint-config-next": "16.1.6",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",

@@ -5,6 +5,7 @@ import Script from "next/script";
 import "./globals.css";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import PWAInstall from "./components/PWAInstall";
 import { siteConfig } from "@/lib/siteConfig";
 
 const geistSans = Geist({
@@ -97,11 +98,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.ico" sizes="32x32" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
         <meta name="theme-color" content="#0b1120" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content={siteConfig.name} />
         {siteConfig.gaId && (
           <>
             <Script
@@ -125,6 +129,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <PWAInstall />
         <Analytics />
       </body>
     </html>
