@@ -8,7 +8,7 @@ The first completely free harmonica learning platform. Real-time pitch detection
 
 - **Chromatic Tuner** — Full-screen note display with a precision deviation wheel. Supports sharp and flat notation. Works for any instrument.
 - **Real-Time Pitch Detection** — YIN algorithm running in-browser via the Web Audio API. Detects which harmonica hole and action (blow/draw) you're playing.
-- **Song Library** — 10 songs from beginner to advanced with interactive tab playback. Auto-advances as you play the correct notes.
+- **Song Library** — 21 songs from beginner to advanced with interactive tab playback. Auto-advances as you play the correct notes.
 - **Practice Mode** — Free play and guided sequences (scales, patterns, exercises) with scoring.
 - **Note Reference Chart** — Interactive chart for the 10-hole diatonic harmonica in C.
 - **Mobile Friendly** — Responsive design that works on phones and tablets. iOS microphone support included.
